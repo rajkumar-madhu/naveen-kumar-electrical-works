@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leads · Naveen Kumar Electrical Works</title>
+  <style>
+    body { font-family: Inter, system-ui, sans-serif; background: #07080c; color: #f4f6fb; margin: 0; }
+    .wrap { width: min(980px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 60px; }
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    p { color: #b7becd; }
+    input, button { padding: 10px 12px; border-radius: 10px; border: 1px solid #2a3146; font: inherit; }
+    input { background: #10131b; color: #fff; min-width: 220px; }
+    button { background: #f6c63a; color: #1a1200; font-weight: 800; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #2a3146; vertical-align: top; }
+    th { color: #f6c63a; }
+    .err { color: #ff8a8a; }
+    a { color: #25D366; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Workshop leads</h1>
+    <p>Enter admin token to view enquiries. Default local token: <code>naveen-admin-2026</code></p>
+    <input id="token" type="password" placeholder="Admin token" value="naveen-admin-2026" />
+    <button type="button" id="load">Load leads</button>
+    <p class="err" id="status"></p>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Name</th><th>Phone</th><th>Vehicle</th><th>Service</th><th>Message</th><th>When</th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <script>
+    document.getElementById("load").onclick = async () => {
+      const token = document.getElementById("token").value.trim();
+      const status = document.getElementById("status");
+      status.textContent = "";
+      try {
+        const res = await fetch("/api/leads", { headers: { "X-Admin-Token": token } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Unauthorized");
+        document.getElementById("rows").innerHTML = (data.leads || []).map((l) => `
+          <tr>
+            <td>${l.id}</td>
+            <td>${l.name}</td>
+            <td><a href="https://wa.me/91${String(l.phone).replace(/\D/g,'').slice(-10)}">${l.phone}</a></td>
+            <td>${l.vehicle || ""}</td>
+            <td>${l.service || ""}</td>
+            <td>${l.message || ""}</td>
+            <td>${l.created_at || ""}</td>
+          </tr>`).join("") || "<tr><td colspan='7'>No leads yet</td></tr>";
+      } catch (err) {
+        status.textContent = err.message;
+      }
+    };
+  </script>
+</body>
+</html>
